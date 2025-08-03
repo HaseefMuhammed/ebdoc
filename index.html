@@ -3,72 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <title>🧑‍⚕️ Health Station</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #fdfbfb, #ebedee);
       text-align: center;
-      padding-top: 60px;
+      padding: 40px 20px;
       color: #333;
     }
+
     h1 {
+      font-size: 32px;
+      color: #007BFF;
+      margin-bottom: 30px;
+    }
+
+    .sensor-box {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 400px;
+      transition: transform 0.3s;
+    }
+
+    .sensor-box:hover {
+      transform: translateY(-5px);
+    }
+
+    .sensor-title {
+      font-size: 22px;
+      margin-bottom: 15px;
+      color: #444;
+    }
+
+    .value {
       font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #28a745;
     }
-    .result {
+
+    .countdown {
       font-size: 20px;
-      margin: 15px 0;
+      color: #ff5722;
+      margin-bottom: 10px;
     }
+
     button {
-      padding: 12px 20px;
-      margin: 10px;
+      padding: 12px 24px;
       font-size: 18px;
       border: none;
       background: #007BFF;
       color: white;
       border-radius: 6px;
       cursor: pointer;
+      transition: background 0.2s ease;
     }
+
     button:hover {
       background: #0056b3;
     }
-    .countdown {
-      font-size: 32px;
-      font-weight: bold;
-      color: #FF5733;
-      margin-top: 20px;
+
+    .icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+      color: #666;
+    }
+
+    @media (max-width: 500px) {
+      .value {
+        font-size: 24px;
+      }
+      button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
+
   <h1>🧑‍⚕️ Health Station</h1>
 
-  <div class="result">Height: <span id="heightValue">-- cm</span></div>
-  <div class="result">Temperature: <span id="tempValue">-- &deg;C</span></div>
+  <!-- Height Section -->
+  <div class="sensor-box">
+    <div class="icon">📏</div>
+    <div class="sensor-title">Height</div>
+    <div class="value" id="heightValue">-- cm</div>
+    <div class="countdown" id="heightCountdown"></div>
+    <button onclick="startHeightMeasurement()">Measure Height</button>
+  </div>
 
-  <button onclick="startHeightMeasurement()">Measure Height</button>
-  <button onclick="measureTemperature()">Measure Temperature</button>
-
-  <div class="countdown" id="countdown"></div>
+  <!-- Pulse Section -->
+  <div class="sensor-box">
+    <div class="icon">❤️</div>
+    <div class="sensor-title">Pulse</div>
+    <div class="value" id="pulseValue">-- bpm</div>
+    <div class="countdown" id="pulseCountdown"></div>
+    <button onclick="measurePulse()">Measure Pulse</button>
+  </div>
 
   <script>
-    const espIP = "http://192.168.214.153"; // ← Change this to your ESP IP
+    const espIP = "http://192.168.86.153"; // Your ESP8266 local IP
 
     function startHeightMeasurement() {
-      const countdownEl = document.getElementById("countdown");
+      const countdownEl = document.getElementById("heightCountdown");
       let count = 3;
-      countdownEl.textContent = count;
+      countdownEl.textContent = `Preparing in ${count}s`;
 
       const interval = setInterval(() => {
         count--;
         if (count > 0) {
-          countdownEl.textContent = count;
+          countdownEl.textContent = `Preparing in ${count}s`;
         } else {
           clearInterval(interval);
           countdownEl.textContent = "Measuring...";
           fetch(`${espIP}/height`)
             .then(res => res.text())
             .then(data => {
-              document.getElementById("heightValue").textContent = data + " cm";
+              document.getElementById("heightValue").textContent = `${data} cm`;
               countdownEl.textContent = "";
             })
             .catch(err => {
@@ -79,15 +135,30 @@
       }, 1000);
     }
 
-    function measureTemperature() {
-      fetch(`${espIP}/temperature`)
-        .then(res => res.text())
-        .then(temp => {
-          document.getElementById("tempValue").innerHTML = temp + " &deg;C";
-        })
-        .catch(() => {
-          document.getElementById("tempValue").innerHTML = "Error";
-        });
+    function measurePulse() {
+      const countdownEl = document.getElementById("pulseCountdown");
+      let count = 3;
+      countdownEl.textContent = `Preparing in ${count}s`;
+
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownEl.textContent = `Preparing in ${count}s`;
+        } else {
+          clearInterval(interval);
+          countdownEl.textContent = "Measuring...";
+          fetch(`${espIP}/pulse`)
+            .then(res => res.text())
+            .then(data => {
+              document.getElementById("pulseValue").textContent = `${data} bpm`;
+              countdownEl.textContent = "";
+            })
+            .catch(err => {
+              document.getElementById("pulseValue").textContent = "Error";
+              countdownEl.textContent = "";
+            });
+        }
+      }, 1000);
     }
   </script>
 </body>

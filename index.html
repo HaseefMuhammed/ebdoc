@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🧑‍⚕️ Health Station</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      text-align: center;
+      padding-top: 60px;
+      color: #333;
+    }
+    h1 {
+      font-size: 28px;
+    }
+    .result {
+      font-size: 20px;
+      margin: 15px 0;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      background: #007BFF;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .countdown {
+      font-size: 32px;
+      font-weight: bold;
+      color: #FF5733;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧑‍⚕️ Health Station</h1>
+
+  <div class="result">Height: <span id="heightValue">-- cm</span></div>
+  <div class="result">Temperature: <span id="tempValue">-- &deg;C</span></div>
+
+  <button onclick="startHeightMeasurement()">Measure Height</button>
+  <button onclick="measureTemperature()">Measure Temperature</button>
+
+  <div class="countdown" id="countdown"></div>
+
+  <script>
+    const espIP = "http://192.168.214.153"; // ← Change this to your ESP IP
+
+    function startHeightMeasurement() {
+      const countdownEl = document.getElementById("countdown");
+      let count = 3;
+      countdownEl.textContent = count;
+
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownEl.textContent = count;
+        } else {
+          clearInterval(interval);
+          countdownEl.textContent = "Measuring...";
+          fetch(`${espIP}/height`)
+            .then(res => res.text())
+            .then(data => {
+              document.getElementById("heightValue").textContent = data + " cm";
+              countdownEl.textContent = "";
+            })
+            .catch(err => {
+              document.getElementById("heightValue").textContent = "Error";
+              countdownEl.textContent = "";
+            });
+        }
+      }, 1000);
+    }
+
+    function measureTemperature() {
+      fetch(`${espIP}/temperature`)
+        .then(res => res.text())
+        .then(temp => {
+          document.getElementById("tempValue").innerHTML = temp + " &deg;C";
+        })
+        .catch(() => {
+          document.getElementById("tempValue").innerHTML = "Error";
+        });
+    }
+  </script>
+</body>
+</html>

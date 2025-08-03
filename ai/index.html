@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Doctor Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.ai {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: #007bff;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.ai .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-control {
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+        }
+
+        .form-control:focus {
+            box-shadow: none;
+            border-color: transparent;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 15px 25px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.6;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px 20px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots::after {
+            content: '';
+            animation: typing 1.5s infinite;
+        }
+
+        @keyframes typing {
+            0%, 60% { content: ''; }
+            20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+        }
+
+        .api-key-modal .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .api-key-modal .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #dc3545;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .welcome-message i {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                margin: 10px;
+                height: calc(100vh - 20px);
+                border-radius: 15px;
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+
+        .speaking-indicator {
+            display: none;
+            color: #28a745;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        .speaking-indicator i {
+            animation: pulse 1s infinite;
+        }
+
+        /* Voice Mode Styles */
+        .voice-mode-toggle {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 8px 15px;
+            color: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .voice-mode-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .voice-mode-toggle.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .voice-controls {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .voice-controls.active {
+            display: block;
+        }
+
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            margin: 0 auto 20px;
+            display: block;
+        }
+
+        .mic-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+        }
+
+        .mic-button.listening {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            animation: pulse-mic 1.5s infinite;
+        }
+
+        @keyframes pulse-mic {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Voice Equalizer */
+        .voice-equalizer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 60px;
+            margin: 20px 0;
+            gap: 3px;
+        }
+
+        .eq-bar {
+            width: 4px;
+            background: linear-gradient(to top, #ff6b6b, #4ecdc4, #45b7d1);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        .eq-bar:nth-child(1) { animation-delay: 0s; }
+        .eq-bar:nth-child(2) { animation-delay: 0.1s; }
+        .eq-bar:nth-child(3) { animation-delay: 0.2s; }
+        .eq-bar:nth-child(4) { animation-delay: 0.3s; }
+        .eq-bar:nth-child(5) { animation-delay: 0.4s; }
+        .eq-bar:nth-child(6) { animation-delay: 0.5s; }
+        .eq-bar:nth-child(7) { animation-delay: 0.6s; }
+        .eq-bar:nth-child(8) { animation-delay: 0.7s; }
+        .eq-bar:nth-child(9) { animation-delay: 0.8s; }
+        .eq-bar:nth-child(10) { animation-delay: 0.9s; }
+
+        .voice-equalizer.active .eq-bar {
+            animation: equalizer 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes equalizer {
+            0% { height: 5px; }
+            100% { height: 50px; }
+        }
+
+        .voice-status {
+            font-size: 0.9rem;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        /* Trending Design Elements */
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+        }
+
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .chat-container.voice-mode {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Voice Recognition Styles */
+        .voice-input-display {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .voice-input-display.listening {
+            border: 2px solid #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .voice-mode-toggle {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+            }
+            
+            .mic-button {
+                width: 70px;
+                height: 70px;
+                font-size: 1.5rem;
+            }
+            
+            .voice-equalizer {
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="voice-mode-toggle" id="voiceModeToggle">
+                <i class="fas fa-microphone me-1"></i>Voice Mode
+            </div>
+            <div class="status-indicator"></div>
+            <h4><i class="fas fa-stethoscope me-2"></i>AI Doctor Assistant</h4>
+            <small>Your personal health companion</small>
+        </div>
+        
+        <div class="voice-controls" id="voiceControls">
+            <button class="mic-button" id="micButton">
+                <i class="fas fa-microphone"></i>
+            </button>
+            
+            <div class="voice-equalizer" id="voiceEqualizer">
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+            </div>
+            
+            <div class="voice-input-display" id="voiceInputDisplay">
+                Click the microphone to start talking...
+            </div>
+            
+            <div class="voice-status" id="voiceStatus">
+                Tap to speak with your AI friend
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <i class="fas fa-user-md"></i>
+                <h5>Welcome to AI Doctor Assistant</h5>
+                <p>I'm here to help you understand your symptoms and provide basic health guidance. Please describe what you're experiencing.</p>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <span class="typing-dots">AI Doctor is thinking</span>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="input-group">
+                <input type="text" class="form-control" id="messageInput" placeholder="Describe your symptoms..." autocomplete="off">
+                <button class="btn btn-send" id="sendBtn" type="button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="speaking-indicator" id="speakingIndicator">
+                <i class="fas fa-volume-up"></i> Speaking...
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
